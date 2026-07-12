@@ -1,0 +1,38 @@
+---
+title: "Smokes"
+author: "Oluchi Nnadi"
+format: html
+execute:
+  echo: false
+---
+
+
+```{r}
+#| message: false
+library(tidyverse)
+library(primer.tutorials)
+```
+
+```{r}
+smokes |>
+  mutate(age_bin = 5 * (age %/% 5)) |>
+  group_by(sex, age_bin) |>
+  summarize(share_yes = mean(smoke == "Yes"), .groups = "drop") |>
+  ggplot(aes(x = age_bin, y = share_yes, color = sex)) +
+  geom_point(size = 3) +
+  geom_smooth(se = FALSE, method = "loess", linewidth = 1.1) +
+  scale_y_continuous(labels = scales::label_percent(),
+                     limits = c(0, 1)) +
+  facet_wrap(~ sex) +
+  labs(
+    title    = "Share of Ever-Smokers by Age and Sex",
+    subtitle = "Older respondents are more likely to be ever-smokers, especially among men",
+    x        = "Age (binned to 5 years)",
+    y        = NULL,
+    caption  = "Source: 1,000-row NHANES cut via primer.tutorials::smokes"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+Summary: Smoking can lead to a plethora of negative long-term health outcomes, there are many different factors that make people statistically more likely to smoke, and two very important ones are gender and age. Using NHANES data of 1,000 U.S. adults, we will build a model to determine he difference in the probability of being an ever-smoker between a 30-year-old woman and a 70-year-old man.
