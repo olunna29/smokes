@@ -11,6 +11,8 @@ execute:
 #| message: false
 library(tidyverse)
 library(primer.tutorials)
+library(tidymodels)
+library(broom)
 ```
 
 ```{r}
@@ -35,4 +37,11 @@ smokes |>
   theme(legend.position = "none")
 ```
 
-Summary: Smoking can lead to a plethora of negative long-term health outcomes, there are many different factors that make people statistically more likely to smoke, and two very important ones are gender and age. Using NHANES data of 1,000 U.S. adults, we will build a model to determine he difference in the probability of being an ever-smoker between a 30-year-old woman and a 70-year-old man.
+```{r}
+fit_smokes <- logistic_reg(engine = "glm") |>
+  fit(smoke ~ age + sex, data = smokes)
+
+fit_smokes
+```
+
+Summary: Smoking can lead to a plethora of negative long-term health outcomes, and there many factors such as gender and age that make people statistically more likely to smoke on average. Using NHANES data of 1,000 U.S. adults, we will build a model to determine the difference in the probability of being an ever-smoker between a 30-year-old woman and a 70-year-old man. However, it is important to note that society's perspective on smoking has shifted since the collection of the NHANES data, so the effects of gender and age on smoking may be skewed leading to bias in the model.
