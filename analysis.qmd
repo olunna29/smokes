@@ -13,6 +13,8 @@ library(tidyverse)
 library(primer.tutorials)
 library(tidymodels)
 library(broom)
+library(gt)
+library(marginaleffects)
 ```
 
 ```{r}
@@ -44,9 +46,58 @@ fit_smokes <- logistic_reg(engine = "glm") |>
 ```
 
 ```{r}
-library(easystats)
-
-check_predictions(extract_fit_engine(fit_smokes))
+#| label: model-table
+tidy(fit_smokes, conf.int = TRUE) |>
+  select(term, estimate, std.error, conf.low, conf.high, p.value) |>
+  mutate(term = case_when(
+    term == "(Intercept)" ~ "Intercept",
+    term == "age" ~ "Age",
+    term == "sexMale" ~ "Sex (Male)",
+    TRUE ~ term
+  )) |>
+  gt() |>
+  tab_header(
+    title = "Logistic Regression Model Results",
+    subtitle = "Predicting Probability of Being an Ever-Smoker"
+  ) |>
+  cols_label(
+    term = "Variable",
+    estimate = "Estimate",
+    std.error = "Standard Error",
+    conf.low = "Lower CI",
+    conf.high = "Upper CI",
+    p.value = "p-value"
+  ) |>
+  fmt_number(
+    columns = c(estimate, std.error, conf.low, conf.high),
+    decimals = 3
+  ) |>
+  fmt_number(
+    columns = p.value,
+    decimals = 4
+  )
 ```
 
-Summary: Smoking can lead to a plethora of negative long-term health outcomes, and there many factors such as gender and age that make people statistically more likely to smoke on average. Using NHANES data of 1,000 U.S. adults, we will build a model to determine the difference in the probability of being an ever-smoker between a 30-year-old woman and a 70-year-old man. However, it is important to note that society's perspective on smoking has shifted since the collection of the NHANES data, so the effects of gender and age on smoking may be skewed leading to bias in the model.
+
+```{r}
+#| label: prediction-plot
+plot_predictions(extract_fit_engine(fit_smokes), condition = c("age", "sex"), draw = FALSE) |>
+  ggplot(aes(x = age, y = estimate, color = sex, fill = sex)) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, color = NA) +
+  geom_line(linewidth = 1.2) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, 1)) +
+  labs(
+    title = "Probability of Being an Ever-Smoker by Age and Sex",
+    subtitle = "Older age and male sex increase the likelihood of ever-smoking",
+    caption = "Source: National Health and Nutrition Examination Survey (NHANES)",
+    x = "Age",
+    y = "Probability",
+    color = "Sex",
+    fill = "Sex"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+
+Summary: Smoking can lead to a plethora of negative long-term health outcomes, and there many factors such as gender and age that make people statistically more likely to smoke on average. Using NHANES data of 1,000 U.S. adults, we will build a model to determine the difference in the probability of being an ever-smoker between a 30-year-old woman and a 70-year-old man. However, it is important to note that society's perspective on smoking has shifted since the collection of the NHANES data, so the effects of gender and age on smoking may be skewed leading to bias in the model. We modeled the Bernoulli variable of being an ever-smoker as a logit function of age and gender. Our model found that males are 13 percentage points more likely to be ever-smokers than females; however, this can range from 7 to 19 percentage points. However, due to the demographic prioritization and age of the NHANES data, this could be slightly off. Additionally, the ever-smoker definition of someone who has smoked 100 cigarettes in their lifetime may not be an accurate reflection of the current smoking demographic.
